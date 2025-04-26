@@ -9,6 +9,8 @@ import hudson.model.Run;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
+import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
+import org.jenkinsci.plugins.plaincredentials.StringCredentials;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,10 +18,12 @@ import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
+import static org.junit.Assert.assertFalse;
+
 @WithJenkins
 class PersonalAccessTokenBindingTest {
 
-    private static final String API_TOKEN = "secret";
+    private static final String API_TOKEN = "secret-api-token-value";
     private static final String API_TOKEN_ID = "personalAccessTokenId";
 
     private JenkinsRule jenkins;
@@ -49,7 +53,14 @@ class PersonalAccessTokenBindingTest {
         project.setDefinition(new CpsFlowDefinition(pipelineText, false));
         Run<?, ?> build = jenkins.buildAndAssertSuccess(project);
         // Pipeline script outputs a substring of credential so that it will not be masked
-        jenkins.assertLogContains("Token1 is ecret", build);
-        jenkins.assertLogContains("Token2 is ecret", build);
+        jenkins.assertLogContains("Token1 is " + API_TOKEN.substring(1), build);
+        jenkins.assertLogContains("Token2 is " + API_TOKEN.substring(1), build);
+    }
+
+    @Test
+    void doesNotRequireWorkspace() throws Exception {
+        PersonalAccessTokenBinding binding = new PersonalAccessTokenBinding("MY_VARIABLE", API_TOKEN_ID);
+        BindingDescriptor<StringCredentials> descriptor = binding.getDescriptor();
+        assertFalse(descriptor.requiresWorkspace());
     }
 }

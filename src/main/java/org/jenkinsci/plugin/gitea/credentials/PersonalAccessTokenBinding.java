@@ -11,18 +11,14 @@ import java.io.IOException;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.credentialsbinding.Binding;
 import org.jenkinsci.plugins.credentialsbinding.BindingDescriptor;
+import org.jenkinsci.plugins.credentialsbinding.impl.StringBinding;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class PersonalAccessTokenBinding extends Binding<PersonalAccessToken> {
+public class PersonalAccessTokenBinding extends StringBinding {
 
     @DataBoundConstructor
-    public PersonalAccessTokenBinding(String credentialsId, String variable) {
+    public PersonalAccessTokenBinding(String variable, String credentialsId) {
         super(variable, credentialsId);
-    }
-
-    @Override
-    protected Class<PersonalAccessToken> type() {
-        return PersonalAccessToken.class;
     }
 
     @Override
@@ -30,9 +26,8 @@ public class PersonalAccessTokenBinding extends Binding<PersonalAccessToken> {
                                                 @Nullable FilePath workspace,
                                                 @Nullable Launcher launcher,
                                                 @NonNull TaskListener listener)
-        throws IOException,InterruptedException {
-        PersonalAccessToken credential = getCredentials(build);
-        return new SingleEnvironment(credential.getToken().getPlainText());
+        throws IOException {
+        return new SingleEnvironment(getCredentials(build).getSecret().getPlainText());
     }
 
     @Symbol("giteaPersonalAccessToken") // Symbol annotation for use in Jenkins UI
